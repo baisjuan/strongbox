@@ -1,6 +1,5 @@
 package org.carlspring.strongbox.storage.validation.resource;
 
-import org.apache.maven.artifact.Artifact;
 import org.carlspring.strongbox.configuration.Configuration;
 import org.carlspring.strongbox.configuration.ConfigurationManager;
 import org.carlspring.strongbox.services.BasicRepositoryService;
@@ -83,10 +82,10 @@ public class ArtifactOperationsValidator
         }
     }
 
-    public void checkAllowsRedeployment(Repository repository, Artifact artifact)
+    public void checkAllowsRedeployment(Repository repository, String artifactPath)
             throws ArtifactStorageException
     {
-        if (basicRepositoryService.containsArtifact(repository, artifact) && !repository.allowsDeployment())
+        if (basicRepositoryService.containsPath(repository, artifactPath) && !repository.allowsDeployment())
         {
             throw new ArtifactStorageException("Re-deployment of artifacts to " + repository.getType() + " repository is not allowed!");
         }

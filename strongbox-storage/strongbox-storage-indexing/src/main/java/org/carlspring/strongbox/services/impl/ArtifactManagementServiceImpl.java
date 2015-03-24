@@ -189,12 +189,10 @@ public class ArtifactManagementServiceImpl
         {
             try
             {
-                Artifact artifact = ArtifactUtils.convertPathToArtifact(path);
-
                 final Set<VersionValidator> validators = versionValidatorService.getVersionValidators();
                 for (VersionValidator validator : validators)
                 {
-                    validator.validate(repository, artifact);
+                    validator.validate(repository, path);
                 }
             }
             catch (VersionValidationException e)
@@ -204,7 +202,7 @@ public class ArtifactManagementServiceImpl
         }
 
         artifactOperationsValidator.checkAllowsDeployment(repository);
-        artifactOperationsValidator.checkAllowsRedeployment(repository, ArtifactUtils.convertPathToArtifact(path));
+        artifactOperationsValidator.checkAllowsRedeployment(repository, path);
 
         return true;
     }

@@ -1,107 +1,110 @@
 package org.carlspring.strongbox.storage.validation.version;
 
-import org.carlspring.strongbox.storage.repository.Repository;
-import org.carlspring.strongbox.storage.repository.RepositoryPolicyEnum;
-
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.handler.DefaultArtifactHandler;
+import org.carlspring.maven.commons.util.ArtifactUtils;
+import org.carlspring.strongbox.configuration.ConfigurationManager;
+import org.carlspring.strongbox.storage.repository.Repository;
+import org.carlspring.strongbox.testing.TestCaseWithArtifactGeneration;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+
 import static org.junit.Assert.fail;
 
 /**
  * @author stodorov
+ * @author mtodorov
  */
-public class ReleaseVersionValidatorTest
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations={"/META-INF/spring/strongbox-*-context.xml", "classpath*:/META-INF/spring/strongbox-*-context.xml"})
+public class ReleaseVersionValidatorTest extends TestCaseWithArtifactGeneration
 {
 
-    Repository repository = new Repository();
+    @Autowired
+    private ConfigurationManager configurationManager;
 
-    ReleaseVersionValidator validator = new ReleaseVersionValidator();
+    private Repository repository;
+
+    private ReleaseVersionValidator validator = new ReleaseVersionValidator();
 
 
     @Before
     public void setUp()
             throws Exception
     {
-        repository.setPolicy(RepositoryPolicyEnum.RELEASE.toString());
+        repository = configurationManager.getConfiguration().getStorage("storage0").getRepository("releases");
     }
 
     @Test
     public void testReleaseValidation()
-            throws VersionValidationException
+            throws VersionValidationException, NoSuchAlgorithmException, XmlPullParserException, IOException
     {
-
         /**
          * Test valid artifacts
          */
-        Artifact validArtifact1 = generateArtifact("1");
-        Artifact validArtifact2 = generateArtifact("1.0");
+        Artifact validArtifact1 = generateArtifact(repository.getBasedir(), "com.foo:bar:1");
+        Artifact validArtifact2 = generateArtifact(repository.getBasedir(), "com.foo:bar:1.0");
 
-        validator.validate(repository, validArtifact1);
-        validator.validate(repository, validArtifact2);
+        validator.validate(repository, ArtifactUtils.convertArtifactToPath(validArtifact1));
+        validator.validate(repository, ArtifactUtils.convertArtifactToPath(validArtifact2));
 
         // If we've gotten here without an exception, then things are alright.
     }
 
     @Test
     public void testInvalidArtifacts()
+            throws NoSuchAlgorithmException, XmlPullParserException, IOException
     {
         /**
          * Test invalid artifacts
          */
-        Artifact invalidArtifact3 = generateArtifact("1.0-SNAPSHOT");
-        Artifact invalidArtifact4 = generateArtifact("1.0-20131004");
-        Artifact invalidArtifact5 = generateArtifact("1.0-20131004.115330");
-        Artifact invalidArtifact6 = generateArtifact("1.0-20131004.115330-1");
+        Artifact invalidArtifact3 = generateArtifact(repository.getBasedir(), "com.foo:bar:1.0-SNAPSHOT");
+        Artifact invalidArtifact4 = generateArtifact(repository.getBasedir(), "com.foo:bar:1.0-20131004");
+        Artifact invalidArtifact5 = generateArtifact(repository.getBasedir(), "com.foo:bar:1.0-20131004.115330");
+        Artifact invalidArtifact6 = generateArtifact(repository.getBasedir(), "com.foo:bar:1.0-20131004.115330-1");
 
         try
         {
-            validator.validate(repository, invalidArtifact3);
+            validator.validate(repository, ArtifactUtils.convertArtifactToPath(invalidArtifact3));
             fail("Incorrectly validated artifact with version 1.0-SNAPSHOT!");
         }
-        catch (VersionValidationException e)
+        catch (VersionValidationException ignored)
         {
         }
 
         try
         {
-            validator.validate(repository, invalidArtifact4);
+            validator.validate(repository, ArtifactUtils.convertArtifactToPath(invalidArtifact4));
             fail("Incorrectly validated artifact with version 1.0-20131004!");
         }
-        catch (VersionValidationException e)
+        catch (VersionValidationException ignored)
         {
         }
 
         try
         {
-            validator.validate(repository, invalidArtifact5);
+            validator.validate(repository, ArtifactUtils.convertArtifactToPath(invalidArtifact5));
             fail("Incorrectly validated artifact with version 1.0-20131004.115330!");
         }
-        catch (VersionValidationException e)
+        catch (VersionValidationException ignored)
         {
         }
 
         try
         {
-            validator.validate(repository, invalidArtifact6);
+            validator.validate(repository, ArtifactUtils.convertArtifactToPath(invalidArtifact6));
             fail("Incorrectly validated artifact with version 1.0-20131004.115330-1!");
         }
-        catch (VersionValidationException e)
+        catch (VersionValidationException ignored)
         {
         }
-    }
-
-    private Artifact generateArtifact(String version)
-    {
-        return new DefaultArtifact("org.carlspring.maven",
-                                   "my-maven-plugin",
-                                   version,
-                                   "compile",
-                                   "jar",
-                                   null,
-                                   new DefaultArtifactHandler("jar"));
     }
 
 }

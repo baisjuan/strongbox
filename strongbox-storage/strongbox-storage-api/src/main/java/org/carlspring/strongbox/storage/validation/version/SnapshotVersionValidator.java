@@ -1,11 +1,13 @@
 package org.carlspring.strongbox.storage.validation.version;
 
 import org.apache.maven.artifact.Artifact;
+import org.carlspring.maven.commons.util.ArtifactUtils;
 import org.carlspring.strongbox.storage.repository.Repository;
 import org.springframework.stereotype.Component;
 
 /**
  * @author stodorov
+ * @author mtodorov
  */
 @Component
 public class SnapshotVersionValidator
@@ -20,17 +22,22 @@ public class SnapshotVersionValidator
      * 1.0-20131004.115330-1
      */
     @Override
-    public void validate(Repository repository, Artifact artifact)
+    public void validate(Repository repository, String artifactPath)
             throws VersionValidationException
     {
-        String version = artifact.getVersion();
-        if (isSnapshot(version) && !repository.acceptsSnapshots())
+        if (ArtifactUtils.isArtifact(artifactPath))
         {
-            throw new VersionValidationException("Cannot deploy a SNAPSHOT artifact to a repository with a release policy!");
-        }
-        if (!isSnapshot(version) && repository.acceptsSnapshots())
-        {
-            throw new VersionValidationException("Cannot deploy a release artifact to a repository with a SNAPSHOT policy!");
+            Artifact artifact = ArtifactUtils.convertPathToArtifact(artifactPath);
+
+            String version = artifact.getVersion();
+            if (isSnapshot(version) && !repository.acceptsSnapshots())
+            {
+                throw new VersionValidationException("Cannot deploy a SNAPSHOT artifact to a repository with a release policy!");
+            }
+            if (!isSnapshot(version) && repository.acceptsSnapshots())
+            {
+                throw new VersionValidationException("Cannot deploy a release artifact to a repository with a SNAPSHOT policy!");
+            }
         }
     }
 

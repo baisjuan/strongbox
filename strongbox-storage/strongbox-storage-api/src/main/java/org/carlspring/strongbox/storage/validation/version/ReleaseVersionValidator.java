@@ -1,6 +1,7 @@
 package org.carlspring.strongbox.storage.validation.version;
 
 import org.apache.maven.artifact.Artifact;
+import org.carlspring.maven.commons.util.ArtifactUtils;
 import org.carlspring.strongbox.storage.repository.Repository;
 import org.springframework.stereotype.Component;
 
@@ -20,18 +21,25 @@ public class ReleaseVersionValidator
      *  1.0-SNAPSHOT
      */
     @Override
-    public void validate(Repository repository, Artifact artifact)
+    public void validate(Repository repository, String artifactPath)
             throws VersionValidationException
     {
-        String version = artifact.getVersion();
-        if (isRelease(version) && !repository.acceptsReleases())
+        if (ArtifactUtils.isArtifact(artifactPath))
         {
-            throw new VersionValidationException("Cannot deploy a release artifact to a repository with a SNAPSHOT policy!");
+            Artifact artifact = ArtifactUtils.convertPathToArtifact(artifactPath);
+
+            String version = artifact.getVersion();
+            if (isRelease(version) && !repository.acceptsReleases())
+            {
+                throw new VersionValidationException("Cannot deploy a release artifact to a repository with a SNAPSHOT policy!");
+            }
+            if (!isRelease(version) && repository.acceptsReleases())
+            {
+                throw new VersionValidationException("Cannot deploy a SNAPSHOT artifact to a repository with a release policy!");
+            }
         }
-        if (!isRelease(version) && repository.acceptsReleases())
-        {
-            throw new VersionValidationException("Cannot deploy a SNAPSHOT artifact to a repository with a release policy!");
-        }
+
+        // Otherwise ignore.
     }
 
     public boolean isRelease(String version)
