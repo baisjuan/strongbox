@@ -253,6 +253,10 @@ public class GroupLocationResolver
 
         return null;
     }
+    
+    public boolean refersHostedRepository() {
+        return false;
+    }
 
     @Override
     public boolean contains(String storageId, String repositoryId, String path)

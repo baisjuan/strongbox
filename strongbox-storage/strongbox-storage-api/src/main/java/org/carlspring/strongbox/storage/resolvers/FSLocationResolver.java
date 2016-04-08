@@ -1,5 +1,14 @@
 package org.carlspring.strongbox.storage.resolvers;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.artifact.Artifact;
 import org.carlspring.commons.io.filters.DirectoryFilter;
@@ -7,20 +16,15 @@ import org.carlspring.maven.commons.util.ArtifactUtils;
 import org.carlspring.strongbox.io.ArtifactFile;
 import org.carlspring.strongbox.io.ArtifactFileOutputStream;
 import org.carlspring.strongbox.io.ArtifactInputStream;
+import org.carlspring.strongbox.services.BasicRepositoryService;
 import org.carlspring.strongbox.storage.Storage;
 import org.carlspring.strongbox.storage.repository.Repository;
+import org.carlspring.strongbox.storage.repository.RepositoryTypeEnum;
 import org.carlspring.strongbox.util.DirUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Paths;
-import java.security.NoSuchAlgorithmException;
-import java.util.Map;
 
 /**
  * @author mtodorov
@@ -34,6 +38,8 @@ public class FSLocationResolver
 
     private String alias = "file-system";
 
+    @Autowired
+    private BasicRepositoryService basicRepositoryService;
 
     public FSLocationResolver()
     {
@@ -81,6 +87,9 @@ public class FSLocationResolver
         {
             Artifact artifact = ArtifactUtils.convertPathToArtifact(artifactPath);
             artifactFile = new ArtifactFile(repository, artifact, true);
+            
+            //TODO SB-299: update metadata in dependant repos
+            updateGroupReposMetadata(artifactPath);
         }
         else
         {
@@ -89,8 +98,19 @@ public class FSLocationResolver
         }
 
         artifactFile.createParents();
-
+        
         return new ArtifactFileOutputStream(artifactFile);
+    }
+
+    private void updateGroupReposMetadata(String artifactPath)
+    {
+        Collection<Storage> storages = getConfiguration().getStorages().values();        
+        for (Storage storage: storages) {
+            Collection<Repository> repositories = storage.getRepositories().values();
+            for (Repository repository : repositories) {
+                
+            }
+        }
     }
 
     @Override
