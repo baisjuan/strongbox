@@ -1,24 +1,29 @@
 package org.carlspring.strongbox.services.impl;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
+import java.util.Map;
+
+import javax.annotation.Resource;
+
+import org.carlspring.maven.commons.util.ArtifactUtils;
 import org.carlspring.strongbox.configuration.ConfigurationManager;
 import org.carlspring.strongbox.io.ArtifactInputStream;
 import org.carlspring.strongbox.services.ArtifactResolutionService;
 import org.carlspring.strongbox.storage.Storage;
 import org.carlspring.strongbox.storage.repository.Repository;
+import org.carlspring.strongbox.storage.repository.RepositoryTypeEnum;
 import org.carlspring.strongbox.storage.resolvers.ArtifactResolutionException;
 import org.carlspring.strongbox.storage.resolvers.ArtifactStorageException;
 import org.carlspring.strongbox.storage.resolvers.LocationResolver;
 import org.carlspring.strongbox.storage.validation.resource.ArtifactOperationsValidator;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.security.NoSuchAlgorithmException;
-import java.util.Map;
 
 /**
  * @author mtodorov
@@ -38,7 +43,6 @@ public class ArtifactResolutionServiceImpl
 
     @Autowired
     private ArtifactOperationsValidator artifactOperationsValidator;
-
 
     public void listResolvers()
     {
@@ -68,7 +72,7 @@ public class ArtifactResolutionServiceImpl
         {
             throw new ArtifactResolutionException("Artifact " + artifactPath + " not found.");
         }
-
+        
         return is;
     }
 
@@ -76,7 +80,7 @@ public class ArtifactResolutionServiceImpl
     public OutputStream getOutputStream(String storageId,
                                         String repositoryId,
                                         String artifactPath)
-            throws IOException
+            throws IOException, XmlPullParserException, NoSuchAlgorithmException
     {
         artifactOperationsValidator.validate(storageId, repositoryId, artifactPath);
 
@@ -89,10 +93,14 @@ public class ArtifactResolutionServiceImpl
         {
             throw new ArtifactStorageException("Artifact " + artifactPath + " cannot be stored.");
         }
-
+        
+        if (ArtifactUtils.isArtifact(artifactPath)) 
+        {
+            updateGroupReposMetadata(artifactPath);
+        }
         return os;
     }
-
+    
     @Override
     public Map<String, LocationResolver> getResolvers()
     {
@@ -108,5 +116,25 @@ public class ArtifactResolutionServiceImpl
     {
         return configurationManager.getConfiguration().getStorage(storageId);
     }
-
+    
+    private void updateGroupReposMetadata(String artifactPath) throws NoSuchAlgorithmException, IOException, XmlPullParserException
+    {
+        Collection<Storage> storages = configurationManager.getConfiguration().getStorages().values();
+        // For each storage
+        for (Storage storage: storages) 
+        {
+            Collection<Repository> repositories = storage.getRepositories().values();
+            // For each repo in the storage
+            for (Repository repository : repositories) 
+            {
+                // If it is a group repo
+                if (RepositoryTypeEnum.GROUP.equals(repository.getType())) 
+                {
+                    // We need to update metadata
+                    LocationResolver resolver = getResolvers().get(repository.getImplementation());
+                    resolver.updateMetadata(storage.getId(),repository.getId(),ArtifactUtils.convertPathToArtifact(artifactPath));
+                }
+            }
+        }
+    }
 }

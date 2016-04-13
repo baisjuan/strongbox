@@ -24,6 +24,7 @@ import org.carlspring.strongbox.storage.validation.version.VersionValidationExce
 import org.carlspring.strongbox.storage.validation.version.VersionValidator;
 import org.carlspring.strongbox.util.ArtifactFileUtils;
 import org.carlspring.strongbox.util.MessageDigestUtils;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -125,6 +126,16 @@ public class ArtifactManagementServiceImpl
                 validateUploadedChecksumAgainstCache(baos, artifactPath);
             }
         }
+        catch (NoSuchAlgorithmException e)
+        {
+            throw new ArtifactStorageException(e.getMessage(), e);
+        }
+
+        catch (XmlPullParserException e)
+        {
+            throw new ArtifactStorageException(e.getMessage(), e);
+        }
+
         catch (ArtifactResolutionException e)
         {
             throw new ArtifactStorageException(e);

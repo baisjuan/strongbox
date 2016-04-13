@@ -21,6 +21,7 @@ import org.carlspring.strongbox.storage.Storage;
 import org.carlspring.strongbox.storage.repository.Repository;
 import org.carlspring.strongbox.storage.repository.RepositoryTypeEnum;
 import org.carlspring.strongbox.util.DirUtils;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,9 +88,6 @@ public class FSLocationResolver
         {
             Artifact artifact = ArtifactUtils.convertPathToArtifact(artifactPath);
             artifactFile = new ArtifactFile(repository, artifact, true);
-            
-            //TODO SB-299: update metadata in dependant repos
-            updateGroupReposMetadata(artifactPath);
         }
         else
         {
@@ -100,17 +98,6 @@ public class FSLocationResolver
         artifactFile.createParents();
         
         return new ArtifactFileOutputStream(artifactFile);
-    }
-
-    private void updateGroupReposMetadata(String artifactPath)
-    {
-        Collection<Storage> storages = getConfiguration().getStorages().values();        
-        for (Storage storage: storages) {
-            Collection<Repository> repositories = storage.getRepositories().values();
-            for (Repository repository : repositories) {
-                
-            }
-        }
     }
 
     @Override
@@ -428,5 +415,14 @@ public class FSLocationResolver
     {
         this.alias = alias;
     }
+
+    @Override
+    public void updateMetadata(String storageId, String repositoryId, Artifact artifact)
+            throws NoSuchAlgorithmException, IOException, XmlPullParserException
+    {
+        // TODO Auto-generated method stub
+        
+    }
+
 
 }

@@ -1,6 +1,10 @@
 package org.carlspring.strongbox.storage.resolvers;
 
+import org.apache.maven.artifact.Artifact;
 import org.carlspring.strongbox.io.ArtifactInputStream;
+import org.carlspring.strongbox.storage.Storage;
+import org.carlspring.strongbox.storage.repository.Repository;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -48,4 +52,5 @@ public interface LocationResolver
 
     void setAlias(String alias);
 
+    void updateMetadata(String storageId, String repositoryId,Artifact artifact) throws NoSuchAlgorithmException, IOException, XmlPullParserException;
 }

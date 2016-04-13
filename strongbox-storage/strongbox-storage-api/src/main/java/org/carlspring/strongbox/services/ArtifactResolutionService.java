@@ -1,6 +1,7 @@
 package org.carlspring.strongbox.services;
 
 import org.carlspring.strongbox.storage.resolvers.LocationResolver;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +23,7 @@ public interface ArtifactResolutionService
     OutputStream getOutputStream(String storageId,
                                  String repositoryId,
                                  String artifactPath)
-                    throws IOException;
+                    throws IOException, NoSuchAlgorithmException, XmlPullParserException;
 
     Map<String, LocationResolver> getResolvers();
 

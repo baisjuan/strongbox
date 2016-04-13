@@ -1,24 +1,33 @@
 package org.carlspring.strongbox.storage.resolvers;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.NoSuchAlgorithmException;
+import java.util.List;
+
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.repository.metadata.Metadata;
+import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Reader;
+import org.apache.maven.project.artifact.PluginArtifact;
+import org.carlspring.commons.io.MultipleDigestInputStream;
+import org.carlspring.maven.commons.util.ArtifactUtils;
 import org.carlspring.strongbox.io.ArtifactInputStream;
 import org.carlspring.strongbox.services.BasicRepositoryService;
 import org.carlspring.strongbox.storage.Storage;
+import org.carlspring.strongbox.storage.metadata.MetadataMerger;
 import org.carlspring.strongbox.storage.repository.Repository;
 import org.carlspring.strongbox.storage.repository.RepositoryTypeEnum;
 import org.carlspring.strongbox.storage.routing.RoutingRule;
 import org.carlspring.strongbox.storage.routing.RoutingRules;
 import org.carlspring.strongbox.storage.routing.RuleSet;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.security.NoSuchAlgorithmException;
-import java.util.List;
 
 /**
  * @author mtodorov
@@ -35,6 +44,8 @@ public class GroupLocationResolver
     @Autowired
     private BasicRepositoryService basicRepositoryService;
 
+    MetadataMerger metadataMerger = new MetadataMerger();
+    
     public GroupLocationResolver()
     {
     }
@@ -336,4 +347,55 @@ public class GroupLocationResolver
         return getConfiguration().getRoutingRules();
     }
 
+    @Override
+    public void updateMetadata(String storageId, String repositoryId, Artifact artifact) throws NoSuchAlgorithmException, IOException, XmlPullParserException
+    {
+        Metadata metadata;
+        String path;
+        if (ArtifactUtils.isSnapshot(artifact.getVersion()))
+        {
+            path = ArtifactUtils.getVersionLevelMetadataPath(artifact);
+            metadata = metadataMerger.updateMetadataAtVersionLevel(artifact,
+                                                                   getMetadata(storageId, repositoryId,path));
+            //SB-299: Save the metadata
+        }
+        path = ArtifactUtils.getArtifactLevelMetadataPath(artifact);
+        metadata = metadataMerger.updateMetadataAtArtifactLevel(artifact, getMetadata(storageId, repositoryId,path));
+
+        //SB-299: Save the metadata
+        if (artifact instanceof PluginArtifact)
+        {
+            path = ArtifactUtils.getGroupLevelMetadataPath(artifact);
+            metadata = metadataMerger.updateMetadataAtGroupLevel((PluginArtifact) artifact, getMetadata(storageId, repositoryId,path));
+          //SB-299: Save the metadata
+        }
+    }
+    
+    private Metadata getMetadata(String storageId,
+                                              String repositoryId,
+                                              String metadataPath)
+            throws IOException, NoSuchAlgorithmException, XmlPullParserException
+    {
+        Storage storage = getConfiguration().getStorage(storageId);
+
+        logger.debug("Checking in " + storage.getId() + ":" + repositoryId + "...");
+
+        final File repoPath = new File(storage.getRepository(repositoryId).getBasedir());
+        final File metadataFile = new File(repoPath, metadataPath).getCanonicalFile();
+
+        logger.debug(" -> Checking for " + metadataFile.getCanonicalPath() + "...");
+
+        if (metadataFile.exists())
+        {
+            logger.debug("Resolved " + metadataFile.getCanonicalPath() + "!");
+
+            InputStream is = new MultipleDigestInputStream(new FileInputStream(metadataFile));
+            
+            MetadataXpp3Reader reader = new MetadataXpp3Reader();
+            return reader.read(is);
+
+        }
+
+        return null;
+    }
 }
