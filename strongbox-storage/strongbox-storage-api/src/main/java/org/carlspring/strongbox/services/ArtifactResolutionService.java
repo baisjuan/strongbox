@@ -23,7 +23,9 @@ public interface ArtifactResolutionService
     OutputStream getOutputStream(String storageId,
                                  String repositoryId,
                                  String artifactPath)
-                    throws IOException, NoSuchAlgorithmException, XmlPullParserException;
+                    throws IOException,
+                           NoSuchAlgorithmException,
+                           XmlPullParserException;
 
     Map<String, LocationResolver> getResolvers();
 

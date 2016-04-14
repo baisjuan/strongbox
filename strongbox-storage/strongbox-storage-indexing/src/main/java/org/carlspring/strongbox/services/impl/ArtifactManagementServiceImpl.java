@@ -128,20 +128,24 @@ public class ArtifactManagementServiceImpl
         }
         catch (NoSuchAlgorithmException e)
         {
+            logger.error(e.getMessage());
             throw new ArtifactStorageException(e.getMessage(), e);
         }
 
         catch (XmlPullParserException e)
         {
+            logger.error(e.getMessage());
             throw new ArtifactStorageException(e.getMessage(), e);
         }
 
         catch (ArtifactResolutionException e)
         {
+            logger.error(e.getMessage());
             throw new ArtifactStorageException(e);
         }
         catch (IOException e)
         {
+            logger.error(e.getMessage());
             throw new ArtifactStorageException(e.getMessage(), e);
         }
         finally

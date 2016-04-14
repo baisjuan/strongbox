@@ -96,7 +96,7 @@ public class ArtifactResolutionServiceImpl
         
         if (ArtifactUtils.isArtifact(artifactPath)) 
         {
-            updateGroupReposMetadata(artifactPath);
+            updateGroupRepositoryMetadata(artifactPath);
         }
         return os;
     }
@@ -117,7 +117,9 @@ public class ArtifactResolutionServiceImpl
         return configurationManager.getConfiguration().getStorage(storageId);
     }
     
-    private void updateGroupReposMetadata(String artifactPath) throws NoSuchAlgorithmException, IOException, XmlPullParserException
+    private void updateGroupRepositoryMetadata(String artifactPath) throws NoSuchAlgorithmException,
+                                                                      IOException,
+                                                                      XmlPullParserException
     {
         Collection<Storage> storages = configurationManager.getConfiguration().getStorages().values();
         // For each storage
